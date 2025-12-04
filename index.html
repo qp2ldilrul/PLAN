@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 主管行動指南：財務會計部門轉型與賦能計畫</title>
+    <!-- 引入 Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- 引入 FontAwesome 圖示 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #0f2c4a; /* 專業深藍 */
+            --secondary-color: #bfa15f; /* 質感金 */
+            --accent-color: #e74c3c; /* 警示紅/重點 */
+            --bg-color: #f4f7f6;
+            --text-color: #333;
+            --white: #ffffff;
+            --slide-width: 1280px;
+            --slide-height: 720px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #2c3e50;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* 簡報容器 16:9 */
+        .presentation-container {
+            width: var(--slide-width);
+            height: var(--slide-height);
+            background-color: var(--white);
+            position: relative;
+            box-shadow: 0 0 50px rgba(0,0,0,0.5);
+            overflow: hidden;
+        }
+
+        /* 每一頁投影片 */
+        .slide {
+            width: 100%;
+            height: 100%;
+            padding: 40px 60px;
+            display: none; /* 預設隱藏 */
+            flex-direction: column;
+            animation: fadeIn 0.5s ease-in-out;
+            background: linear-gradient(135deg, #fff 80%, #f0f4f8 100%);
+        }
+
+        .slide.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 頁眉與頁腳 */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--secondary-color);
+            padding-bottom: 15px;
+            margin-bottom: 30px;
+        }
+
+        .logo {
+            font-size: 1.2rem;
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+
+        .slide-number {
+            font-size: 1rem;
+            color: #888;
+        }
+
+        h1 {
+            font-size: 2.8rem;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            font-size: 2rem;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+        }
+
+        h3 {
+            font-size: 1.4rem;
+            color: var(--secondary-color);
+            margin-bottom: 15px;
+            border-left: 5px solid var(--primary-color);
+            padding-left: 10px;
+        }
+
+        p, li {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            color: var(--text-color);
+            margin-bottom: 10px;
+        }
+
+        /* 表格樣式 */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .data-table th {
+            background-color: var(--primary-color);
+            color: var(--white);
+            padding: 15px;
+            text-align: left;
+            font-size: 1.1rem;
+        }
+
+        .data-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #ddd;
+            font-size: 1rem;
+        }
+
+        .data-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        .data-table tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        .highlight-text {
+            color: var(--accent-color);
+            font-weight: bold;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            margin-right: 5px;
+        }
+        
+        .tag-ai { background-color: #e3f2fd; color: #1565c0; border: 1px solid #1565c0; }
+        .tag-human { background-color: #fff3e0; color: #e65100; border: 1px solid #e65100; }
+
+        /* 卡片佈局 */
+        .card-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .card {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border-top: 4px solid var(--secondary-color);
+        }
+
+        /* 封面頁樣式 */
+        .cover-slide {
+            background: url('https://images.unsplash.com/photo-1554224155-6726b3ff858f?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80') no-repeat center center/cover;
+            position: relative;
+            justify-content: center;
+            align-items: flex-start; /* 改為靠左對齊 */
+            color: var(--white);
+        }
+
+        .cover-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(to right, rgba(15, 44, 74, 0.9) 0%, rgba(15, 44, 74, 0.7) 60%, rgba(15, 44, 74, 0.2) 100%);
+        }
+
+        .cover-content {
+            position: relative;
+            z-index: 2;
+            max-width: 800px;
+            padding-left: 60px; /* 增加左側內距 */
+        }
+
+        .cover-title {
+            font-size: 3.5rem;
+            font-weight: 700;
+            color: var(--secondary-color);
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .cover-subtitle {
+            font-size: 1.8rem;
+            color: var(--white);
+            margin-bottom: 40px;
+            border-left: 6px solid var(--secondary-color);
+            padding-left: 20px;
+        }
+
+        .presenter {
+            font-size: 1.2rem;
+            margin-top: 50px;
+            background: rgba(255,255,255,0.1);
+            padding: 10px 20px;
+            display: inline-block;
+            border-radius: 30px;
+            backdrop-filter: blur(5px);
+        }
+
+        /* 控制按鈕 */
+        .controls {
+            position: absolute;
+            bottom: 20px;
+            right: 30px;
+            z-index: 100;
+        }
+
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin-left: 10px;
+            transition: background 0.3s;
+        }
+
+        .btn:hover {
+            background-color: var(--secondary-color);
+        }
+
+        .big-number {
+            font-size: 3rem;
+            color: var(--secondary-color);
+            font-weight: bold;
+            line-height: 1;
+        }
+
+        /* 風格化列表 */
+        .check-list {
+            list-style: none;
+        }
+        .check-list li {
+            position: relative;
+            padding-left: 30px;
+            margin-bottom: 15px;
+        }
+        .check-list li::before {
+            content: '\f00c';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            position: absolute;
+            left: 0;
+            color: var(--secondary-color);
+        }
+        .cross-list li::before {
+            content: '\f00d';
+            color: var(--accent-color);
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="presentation-container">
+    
+    <!-- Slide 1: Cover -->
+    <div class="slide cover-slide active" id="slide-1">
+        <div class="cover-overlay"></div>
+        <div class="cover-content">
+            <h1 class="cover-title">AI 主管行動指南</h1>
+            <h2 class="cover-subtitle">財務會計部門轉型與賦能計畫</h2>
+            <div class="presenter">
+                <i class="fas fa-user-tie"></i> 報告人：潘鈺今 | <i class="fas fa-calendar-alt"></i> 2025
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 2: 優勢與核心目標 -->
+    <div class="slide" id="slide-2">
+        <div class="header">
+            <div class="logo">Finance Transformation</div>
+            <div class="slide-number">02 / 10</div>
+        </div>
+        <h2><i class="fas fa-rocket"></i> 轉型優勢與核心目標</h2>
+        <div class="card-container">
+            <div class="card">
+                <h3><i class="fas fa-chart-line"></i> 效率優勢</h3>
+                <p>透過 AI 協作，將重複性高、規則明確的工作自動化。</p>
+                <div style="display: flex; align-items: center; margin-top: 20px; gap: 15px;">
+                    <div><span class="big-number">60%</span><br><span style="font-size: 0.9rem;">節省資料處理時間</span></div>
+                    <div><span class="big-number">0</span><br><span style="font-size: 0.9rem;">人工格式錯誤</span></div>
+                </div>
+            </div>
+            <div class="card">
+                <h3><i class="fas fa-brain"></i> 價值轉型</h3>
+                <p>將人力從「數據輸入者」釋放為「決策支援者」。</p>
+                <ul class="check-list" style="margin-top: 15px;">
+                    <li>從「紀錄過去」轉向「預測未來」</li>
+                    <li>從「合規報稅」轉向「稅務策略規劃」</li>
+                    <li>從「被動提供報表」轉向「主動商業分析」</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 3: 挑戰與風險 -->
+    <div class="slide" id="slide-3">
+        <div class="header">
+            <div class="logo">Risk Management</div>
+            <div class="slide-number">03 / 10</div>
+        </div>
+        <h2><i class="fas fa-exclamation-triangle"></i> 面臨的挑戰與 AI 侷限</h2>
+        <p>AI 並非萬能，尤其在台灣稅務法規與商業邏輯的應用上，存在以下不可忽視的挑戰：</p>
+        
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th width="20%">挑戰面向</th>
+                    <th width="35%">AI 的弱點 (AI Limitations)</th>
+                    <th width="45%">人類必須介入的關鍵 (Human Core)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>法規遵循</strong><br><small>Tax Compliance</small></td>
+                    <td>無法完全理解台灣稅法變動與灰色地帶，易給出錯誤建議。</td>
+                    <td><span class="highlight-text">合規判斷</span>：判定費用是否可列支、憑證是否符合稅法要求 (如：交際費限額)。</td>
+                </tr>
+                <tr>
+                    <td><strong>商業邏輯</strong><br><small>Business Logic</small></td>
+                    <td>只能看數字增減，無法理解數字背後的「公司故事」。</td>
+                    <td><span class="highlight-text">異常解讀</span>：解釋為何某筆費用突增（如：新產品上市推廣）。</td>
+                </tr>
+                <tr>
+                    <td><strong>內部控制</strong><br><small>Internal Control</small></td>
+                    <td>無法辨識憑證造假或實質交易的真實性。</td>
+                    <td><span class="highlight-text">風險控管</span>：權限分工、確保流程符合內稽規範。</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Slide 4: 個人職能轉型 -->
+    <div class="slide" id="slide-4">
+        <div class="header">
+            <div class="logo">Personal Function</div>
+            <div class="slide-number">04 / 10</div>
+        </div>
+        <h2><i class="fas fa-user-edit"></i> 個人職能轉型：從執行到決策</h2>
+        <div class="card-container" style="grid-template-columns: 1fr 1fr;">
+            <div class="card">
+                <h3>1. 財務與稅務判斷力 <span class="tag tag-human">核心</span></h3>
+                <ul class="check-list">
+                    <li><strong>費用屬性判定：</strong>精確區分資本支出 vs 費用支出。</li>
+                    <li><strong>異常解讀：</strong>不僅發現異常，更能追溯原因。</li>
+                    <li><strong>合規建議：</strong>依據台灣稅法提供即時建議。</li>
+                </ul>
+            </div>
+            <div class="card">
+                <h3>2. 數據分析能力 <span class="tag tag-ai">AI協作</span></h3>
+                <ul class="check-list">
+                    <li><strong>結構分析：</strong>掌握損益結構與成本動因。</li>
+                    <li><strong>商業洞察：</strong>解讀 AI 報表，提出可執行的策略。</li>
+                </ul>
+            </div>
+            <div class="card">
+                <h3>3. 流程控制與風險管理 <span class="tag tag-human">內控</span></h3>
+                <ul class="check-list">
+                    <li><strong>SOP 設計：</strong>建立 AI 資料輸入標準。</li>
+                    <li><strong>文件化流程：</strong>確保流程對稽核友善 (Audit-friendly)。</li>
+                </ul>
+            </div>
+            <div class="card">
+                <h3>4. 跨部門協作能力 <span class="tag tag-human">不可取代</span></h3>
+                <ul class="check-list">
+                    <li><strong>溝通橋樑：</strong>連接資訊、會計與業務部門。</li>
+                    <li><strong>需求定義：</strong>明確定義資料格式，推動自動化落地。</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 5: 出納解決方案 -->
+    <div class="slide" id="slide-5">
+        <div class="header">
+            <div class="logo">Solutions: Cashier</div>
+            <div class="slide-number">05 / 10</div>
+        </div>
+        <h2><i class="fas fa-coins"></i> 解決方案：出納職能優化 (Cashier)</h2>
+        <p><strong>關鍵目標：</strong> 強化資金風險管理，將繁瑣核對交給 AI。</p>
+        
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th width="20%">關鍵流程</th>
+                    <th width="50%">AI 協作內容 (Process Optimization)</th>
+                    <th width="30%">建議工具 (Tools)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>銀行對帳</strong></td>
+                    <td>匯入 Excel 後，自動對比入帳與明細，<span class="highlight-text">秒速抓出差異</span>。</td>
+                    <td>ChatGPT + Excel, Gemini</td>
+                </tr>
+                <tr>
+                    <td><strong>費用核銷整理</strong></td>
+                    <td>協助分類單據、轉換格式，並比對部門與會計科目。</td>
+                    <td>ChatGPT, Gemini</td>
+                </tr>
+                <tr>
+                    <td><strong>異常收支偵測</strong></td>
+                    <td>找出金額極端值、重複紀錄或非慣例交易時間。</td>
+                    <td>ChatGPT (Data Analysis)</td>
+                </tr>
+                <tr>
+                    <td><strong>資金表自動化</strong></td>
+                    <td>將收支資料轉為視覺化的資金流報表與趨勢圖。</td>
+                    <td>Excel Copilot</td>
+                </tr>
+            </tbody>
+        </table>
+        <div style="margin-top: 20px; background: #e3f2fd; padding: 15px; border-left: 5px solid #1565c0;">
+            <strong><i class="fas fa-star"></i> 未來核心強化：</strong> 資金調度判斷、票據法規掌握、收付款內控執行。
+        </div>
+    </div>
+
+    <!-- Slide 6: 會計解決方案 -->
+    <div class="slide" id="slide-6">
+        <div class="header">
+            <div class="logo">Solutions: Accounting</div>
+            <div class="slide-number">06 / 10</div>
+        </div>
+        <h2><i class="fas fa-calculator"></i> 解決方案：會計職能優化 (Accounting)</h2>
+        <p><strong>關鍵目標：</strong> 提升結帳速度與稅務精確度，轉型為商業顧問。</p>
+
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th width="20%">關鍵流程</th>
+                    <th width="50%">AI 協作內容 (Process Optimization)</th>
+                    <th width="30%">建議工具 (Tools)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>資料格式清洗</strong></td>
+                    <td>將多份 Excel 整合、合併，並校對欄位一致性 (ETL)。</td>
+                    <td>ChatGPT (Code Interpreter)</td>
+                </tr>
+                <tr>
+                    <td><strong>判斷費用分類</strong></td>
+                    <td>初步分類費用科目（如：餐費 vs 交際費），並標記疑義。</td>
+                    <td>ChatGPT</td>
+                </tr>
+                <tr>
+                    <td><strong>月結檢查</strong></td>
+                    <td>找出異常變動、未對應科目或重複成本，<span class="highlight-text">縮短結帳天數</span>。</td>
+                    <td>Gemini / Excel AI</td>
+                </tr>
+                <tr>
+                    <td><strong>稅務前檢</strong></td>
+                    <td>比對科目合理性（限額計算、可扣除/不可扣除試算）。</td>
+                    <td>ChatGPT + 稅法資料庫</td>
+                </tr>
+            </tbody>
+        </table>
+        <div style="margin-top: 20px; background: #e3f2fd; padding: 15px; border-left: 5px solid #1565c0;">
+            <strong><i class="fas fa-star"></i> 未來核心強化：</strong> 稅務法規適法性判斷、成本結構分析、內控流程設計。
+        </div>
+    </div>
+
+    <!-- Slide 7: 經理/主管解決方案 -->
+    <div class="slide" id="slide-7">
+        <div class="header">
+            <div class="logo">Solutions: Manager</div>
+            <div class="slide-number">07 / 10</div>
+        </div>
+        <h2><i class="fas fa-chess-king"></i> 解決方案：主管職能優化 (Manager)</h2>
+        <p><strong>關鍵目標：</strong> 策略規劃、跨部門整合與決策支援。</p>
+
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th width="20%">關鍵流程</th>
+                    <th width="50%">AI 協作內容 (Process Optimization)</th>
+                    <th width="30%">建議工具 (Tools)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>流程標準化 SOP</strong></td>
+                    <td>協助撰寫標準作業程序、任務描述與防呆機制。</td>
+                    <td>ChatGPT, Notion AI</td>
+                </tr>
+                <tr>
+                    <td><strong>內控檢查點</strong></td>
+                    <td>模擬流程，協助檢查現有控制點是否存在風險缺口。</td>
+                    <td>ChatGPT</td>
+                </tr>
+                <tr>
+                    <td><strong>年度成本分析</strong></td>
+                    <td>自動產生年度趨勢分析，並撰寫<span class="highlight-text">報告文字草稿</span>。</td>
+                    <td>ChatGPT + Excel</td>
+                </tr>
+                <tr>
+                    <td><strong>管理報表摘要</strong></td>
+                    <td>產出提供給高階主管的決策簡報 (Executive Summary)。</td>
+                    <td>Gamma, PowerPoint AI</td>
+                </tr>
+            </tbody>
+        </table>
+        <div style="margin-top: 20px; background: #e3f2fd; padding: 15px; border-left: 5px solid #1565c0;">
+            <strong><i class="fas fa-star"></i> 未來核心強化：</strong> 數據決策能力、跨部門溝通談判、營運策略夥伴。
+        </div>
+    </div>
+
+    <!-- Slide 8: 實務案例 (流程自動化) -->
+    <div class="slide" id="slide-8">
+        <div class="header">
+            <div class="logo">Use Case</div>
+            <div class="slide-number">08 / 10</div>
+        </div>
+        <h2><i class="fas fa-sync-alt"></i> 實務案例：每日循環工作標準化</h2>
+        <p>透過建立標準化流程，我們將實現以下轉變：</p>
+        
+        <div style="display: flex; gap: 30px; margin-top: 30px;">
+            <div style="flex: 1; background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #ddd;">
+                <h3 style="color: #7f8c8d; border-color: #7f8c8d;">🔴 傳統流程 (Before)</h3>
+                <ul class="cross-list" style="list-style: none; padding-left: 0;">
+                    <li style="padding-left: 30px; position: relative; margin-bottom: 15px;">人工逐筆核對銀行明細，耗時且易疲勞。</li>
+                    <li style="padding-left: 30px; position: relative; margin-bottom: 15px;">費用單據靠人工記憶分類，標準不一。</li>
+                    <li style="padding-left: 30px; position: relative; margin-bottom: 15px;">等到月底才發現月初的異常交易。</li>
+                </ul>
+            </div>
+            <div style="display: flex; align-items: center; font-size: 2rem; color: var(--secondary-color);">
+                <i class="fas fa-arrow-right"></i>
+            </div>
+            <div style="flex: 1; background: #fff; padding: 20px; border-radius: 8px; border: 1px solid var(--primary-color);">
+                <h3 style="color: var(--primary-color);">🟢 AI 賦能流程 (After)</h3>
+                <ul class="check-list">
+                    <li>AI 自動比對並標記差異，人工僅需處理異常。</li>
+                    <li>AI 依據歷史數據建議分類，人工審核確認。</li>
+                    <li>即時偵測異常數據，風險控制在當下。</li>
+                </ul>
+            </div>
+        </div>
+        <div style="text-align: center; margin-top: 40px;">
+            <a href="https://qp2ldilrul.my.canva.site/accounting-ai-workflow" target="_blank" style="background: var(--primary-color); color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+                <i class="fas fa-link"></i> 查看完整 Accounting AI Workflow
+            </a>
+        </div>
+    </div>
+
+    <!-- Slide 9: 核心價值 -->
+    <div class="slide" id="slide-9">
+        <div class="header">
+            <div class="logo">Core Values</div>
+            <div class="slide-number">09 / 10</div>
+        </div>
+        <h2><i class="fas fa-shield-alt"></i> 會計部門的護城河 (AI 無法取代)</h2>
+        <p>在 AI 時代，以下五項能力是財務團隊必須堅守的價值核心：</p>
+        
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 30px;">
+            <div class="card" style="border-top-color: var(--accent-color);">
+                <div style="font-size: 2rem; color: var(--accent-color); margin-bottom: 10px;"><i class="fas fa-balance-scale"></i></div>
+                <h4>稅法理解與專業判斷</h4>
+                <p style="font-size: 0.95rem;">AI 能初判，但適法性決策與責任承擔仍需依賴人類專業。</p>
+            </div>
+            <div class="card" style="border-top-color: var(--accent-color);">
+                <div style="font-size: 2rem; color: var(--accent-color); margin-bottom: 10px;"><i class="fas fa-building"></i></div>
+                <h4>商業邏輯與營運理解</h4>
+                <p style="font-size: 0.95rem;">AI 不懂公司內情。你必須知道為何費用增加、理解成本動因。</p>
+            </div>
+            <div class="card" style="border-top-color: var(--accent-color);">
+                <div style="font-size: 2rem; color: var(--accent-color); margin-bottom: 10px;"><i class="fas fa-lock"></i></div>
+                <h4>風險控管 (內控)</h4>
+                <p style="font-size: 0.95rem;">確保憑證真實性、權限分工及作業流程符合稅務需求。</p>
+            </div>
+            <div class="card" style="border-top-color: var(--accent-color);">
+                <div style="font-size: 2rem; color: var(--accent-color); margin-bottom: 10px;"><i class="fas fa-comments"></i></div>
+                <h4>跨部門溝通能力</h4>
+                <p style="font-size: 0.95rem;">AI 無法代替你去說服業務部門，或向管理層解釋財務影響。</p>
+            </div>
+            <div class="card" style="border-top-color: var(--accent-color); grid-column: span 2;">
+                <div style="font-size: 2rem; color: var(--accent-color); margin-bottom: 10px;"><i class="fas fa-lightbulb"></i></div>
+                <h4>洞察與行動方案</h4>
+                <p style="font-size: 0.95rem;">AI 負責整理資料，但「結論、建議、具體行動方案」仍需由人工產出。</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 10: 結論 -->
+    <div class="slide" id="slide-10">
+        <div class="header">
+            <div class="logo">Conclusion</div>
+            <div class="slide-number">10 / 10</div>
+        </div>
+        <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 80%; text-align: center;">
+            <i class="fas fa-check-circle" style="font-size: 5rem; color: var(--secondary-color); margin-bottom: 30px;"></i>
+            <h1 style="font-size: 3rem;">成為企業運營的策略夥伴</h1>
+            <p style="font-size: 1.5rem; max-width: 800px; margin-top: 20px;">
+                AI 是工具，我們是建築師。<br>
+                透過流程標準化與 AI 協作，我們將釋放雙手，<br>
+                專注於<strong>判斷、溝通、策略</strong>，創造不可替代的價值。
+            </p>
+            <div style="margin-top: 50px; font-size: 1.2rem; color: #666;">
+                Q & A
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Controls -->
+    <div class="controls">
+        <button class="btn" onclick="prevSlide()"><i class="fas fa-chevron-left"></i> 上一頁</button>
+        <button class="btn" onclick="nextSlide()">下一頁 <i class="fas fa-chevron-right"></i></button>
+    </div>
+
+</div>
+
+<script>
+    let currentSlide = 0;
+    const slides = document.querySelectorAll('.slide');
+    const totalSlides = slides.length;
+
+    function showSlide(index) {
+        slides.forEach((slide, i) => {
+            slide.classList.remove('active');
+            if (i === index) {
+                slide.classList.add('active');
+            }
+        });
+    }
+
+    function nextSlide() {
+        if (currentSlide < totalSlides - 1) {
+            currentSlide++;
+            showSlide(currentSlide);
+        }
+    }
+
+    function prevSlide() {
+        if (currentSlide > 0) {
+            currentSlide--;
+            showSlide(currentSlide);
+        }
+    }
+
+    // Keyboard navigation
+    document.addEventListener('keydown', function(event) {
+        if (event.key === "ArrowRight" || event.key === "Space") {
+            nextSlide();
+        } else if (event.key === "ArrowLeft") {
+            prevSlide();
+        }
+    });
+</script>
+
+</body>
+</html>
