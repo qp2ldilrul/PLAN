@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title> 115 年全細項自動連動系統</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        :root { --primary: #2c3e50; --bg: #f1f5f9; --blue: #1e40af; --auto-bg: #e0f2fe; --new-biz: #059669; --total-gold: #854d0e; --stress: #fff7ed; --stress-border: #fdba74; }
+        
+        body { font-family: "PingFang TC", "Microsoft JhengHei", sans-serif; background: var(--bg); padding: 15px; font-size: 14px; }
+        .container { max-width: 1600px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .no-print { display: flex; gap: 10px; justify-content: flex-end; margin-bottom: 15px; }
+        .btn { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 14px; transition: 0.3s; }
+        .btn-print { background: #64748b; color: white; }
+        .btn-pdf { background: #e11d48; color: white; }
+        .btn:hover { opacity: 0.8; }
+
+        .main-grid { display: grid; grid-template-columns: 600px 1fr; gap: 20px; }
+        .side-panel { background: #fff; border: 1px solid #cbd5e1; padding: 15px; border-radius: 8px; height: 95vh; overflow-y: scroll; }
+        
+        h4 { margin: 15px 0 8px; color: white; background: var(--primary); padding: 8px 12px; border-radius: 4px; font-size: 15px; }
+        .new-biz-title { background: var(--new-biz) !important; }
+        .input-row { display: flex; align-items: center; margin-bottom: 5px; border-bottom: 1px solid #f1f5f9; padding-bottom: 3px; }
+        .input-row label { flex: 1; color: #475569; padding-right: 5px; }
+        .input-row input { width: 140px; padding: 5px; border: 1px solid #cbd5e1; border-radius: 3px; text-align: right; font-size: 14px; }
+        .pct-input { width: 45px !important; margin: 0 5px; text-align: center; }
+        .auto-calc { background-color: var(--auto-bg); font-weight: bold; border: 1px solid #bae6fd !important; color: #0369a1; }
+        .hint { font-size: 12px; color: #0369a1; margin-left: 5px; }
+
+        .report-table { width: 100%; border-collapse: collapse; }
+        .report-table td { padding: 12px; border-bottom: 1px solid #edf2f7; }
+        .num { text-align: right; font-family: 'Consolas', monospace; font-weight: bold; font-size: 1.4em; }
+        .total-row { background: #f8fafc; font-weight: bold; border-top: 2px solid #cbd5e1; }
+        .final-row { background: var(--blue); color: white; }
+        .final-row .num { color: #fde047; font-size: 1.7em; }
+        .new-biz-row { background: #ecfdf5; border-top: 2px solid #059669; }
+        .new-biz-val { color: #059669; }
+        .grand-total-row { background: #fefce8; border-top: 3px double var(--total-gold); border-bottom: 3px double var(--total-gold); }
+        .grand-total-row td { color: var(--total-gold); font-weight: 900 !important; font-size: 16px; }
+
+        /* 壓力測試與損益平衡區樣式 */
+        .stress-test-box { background: var(--stress); border: 2px dashed var(--stress-border); border-radius: 6px; padding: 10px; margin: 10px 0; }
+        .stress-test-box .stress-title { color: #9a3412; font-weight: bold; display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+        .stress-input { width: 100px; padding: 4px; border: 1px solid var(--stress-border); border-radius: 4px; text-align: right; font-weight: bold; color: #c2410c; }
+        .bep-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px; padding-top: 10px; border-top: 1px solid #fdba74; }
+        .bep-item { font-size: 12px; color: #9a3412; }
+        
+        select { padding: 4px; border-radius: 3px; border: 1px solid #cbd5e1; font-size: 13px; }
+        .tax-row { color: #dc2626; font-style: italic; }
+
+        @media print {
+            .no-print { display: none !important; }
+            .side-panel { height: auto !important; overflow: visible !important; border: 1px solid #eee !important; }
+            .container { box-shadow: none; max-width: 100%; padding: 0; }
+            body { background: white; padding: 0; }
+            .main-grid { display: flex; flex-direction: column; gap: 30px; }
+            h4, .final-row, .new-biz-row, .grand-total-row, .stress-test-box { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container" id="print-area">
+    <div class="no-print">
+        <button class="btn btn-print" onclick="window.print()">列印全頁報表</button>
+        <button class="btn btn-pdf" onclick="exportPDF()">直接匯出 PDF</button>
+    </div>
+
+    <div class="main-grid">
+        <div class="side-panel">
+            <h3 style="text-align:center;">115 年全科目明細自填</h3>
+
+            <h4>1. 營業收入 (年度總額 - 萬元)</h4>
+            <div class="input-row"><label>企頻收入 (全家7000+家福3000)</label><input type="text" id="in_r1" value="10,000" onchange="syncToStress(); calc()" onblur="fmtIn(this)"></div>
+            <div class="input-row"><label>新鮮視收入</label><input type="text" id="in_r2" value="3,000" onchange="calc()" onblur="fmtIn(this)"></div>
+            <div class="input-row"><label>廣播收入</label><input type="text" id="in_r3" value="2,000" onchange="calc()" onblur="fmtIn(this)"></div>
+            <div class="input-row"><label>年度代理</label><input type="text" id="in_r4" value="1,348" onchange="calc()" onblur="fmtIn(this)"></div>
+            <div class="input-row"><label>年度製作</label><input type="text" id="in_r5" value="450" onchange="calc()" onblur="fmtIn(this)"></div>
+            <div class="input-row"><label>其餘收入</label><input type="text" id="in_r6" value="0" onchange="calc()" onblur="fmtIn(this)"></div>
+
+            <h4>2. 營業成本 (年度總額 - 萬元)</h4>
+            <div class="input-row"><label>企頻成本</label><input type="text" id="c1" value="900" onchange="syncToStress(); calc()" onblur="fmtIn(this)"></div>
+            <div class="input-row"><label>新鮮視成本</label><input type="text" id="c2" value="1,200" onchange="calc()" onblur="fmtIn(this)"></div>
+            <div class="input-row"><label>廣播成本 <span class="hint">(廣播收入 65%)</span></label><input type="text" id="c3_radio" class="auto-calc" readonly></div>
+            <div class="input-row"><label>製作成本 <span class="hint">(總收入 3.5%)</span></label><input type="text" id="c3_prod" class="auto-calc" readonly></div>
+            <div class="input-row"><label>年度代理成本</label><input type="text" id="c4_agent" value="975" onchange="calc()" onblur="fmtIn(this)"></div>
+            <div class="input-row"><label>其餘成本(鉑霖)</label><input type="text" id="c5_other" value="180" onchange="calc()" onblur="fmtIn(this)"></div>
+
+            <h4>3. 人事費用 (11項逐筆 - 元)</h4>
+            <div class="input-row"><label>1. 薪資費用-公司報支</label><input type="text" id="p1" value="13,885,600" onchange="calc()" onblur="fmtIn(this)"></div>
+            <div class="input-row"><label>2. 薪資費用-簽約金</label><input type="text" id="p2" value="581,000" onchange="calc()" onblur="fmtIn(this)"></div>
+            <div class="input-row"><label>3. 交通津貼</label><input type="text" id="p3" value="180,000" onchange="calc()" onblur="fmtIn(this)"></div>
+            <div class="input-row"><label>4. 加班費/車馬費</label><input type="text" id="p4" value="324,000" onchange="calc()" onblur="fmtIn(this)"></div>
+            <div class="input-row"><label>5. 勞保費 <span class="hint">(基數 7%)</span></label><input type="text" id="p5" class="auto-calc" readonly></div>
+            <div class="input-row"><label>6. 健保費 <span class="hint">(基數 6.5%)</span></label><input type="text" id="p6" class="auto-calc" readonly></div>
+            <div class="input-row"><label>7. 補充保費 <span class="hint">(基數 2.11%)</span></label><input type="text" id="p7" class="auto-calc" readonly></div>
+            <div class="input-row"><label>8. 伙食津貼</label><input type="text" id="p8" value="120,000" onchange="calc()" onblur="fmtIn(this)"></div>
+            <div class="input-row"><label>9. 年終獎金提撥 <span class="hint">(基數 20%)</span></label><input type="text" id="p9" class="auto-calc" readonly></div>
+            <div class="input-row"><label>10. 退休金-勞保局 <span class="hint">(基數 6%)</span></label><input type="text" id="p10" class="auto-calc" readonly></div>
+            <div class="input-row"><label>11. 其它</label><input type="text" id="p11" value="0" onchange="calc()" onblur="fmtIn(this)"></div>
+
+            <h4>4. 管理費用 (15項逐筆 - 元)</h4>
+            <div class="input-row"><label>1. 租金-辦公室</label><input type="text" id="m1" value="3,960,000" onchange="calc()" onblur="fmtIn(this)"></div>
+            <div class="input-row"><label>2. 租金-停車場</label><input type="text" id="m2" value="171,432" onchange="calc()" onblur="fmtIn(this)"></div>
+            <div class="input-row"><label>3. 租金-營業用</label><input type="text" id="m3" value="314,112" onchange="calc()" onblur="fmtIn(this)"></div>
+            <div class="input-row"><label>4. 文具用品費</label><input type="text" id="m4" value="65,000" onchange="calc()" onblur="fmtIn(this)"></div>
+            <div class="input-row"><label>5. 印刷費</label><input type="text" id="m5" value="0" onchange="calc()" onblur="fmtIn(this)"></div>
+            <div class="input-row"><label>6. 水電煤氣費</label><input type="text" id="m6" value="342,000" onchange="calc()" onblur="fmtIn(this)"></div>
+            <div class="input-row"><label>7. 修繕費</label><input type="text" id="m7" value="132,000" onchange="calc()" onblur="fmtIn(this)"></div>
+            <div class="input-row"><label>8. 保險費 (財產)</label><input type="text" id="m8" value="21,600" onchange="calc()" onblur="fmtIn(this)"></div>
+            <div class="input-row"><label>9. 稅捐 (房地)</label><input type="text" id="m9" value="0" onchange="calc()" onblur="fmtIn(this)"></div>
+            <div class="input-row"><label>10. 旅遊基金 <span class="hint">(連動企頻 2%)</span></label><input type="text" id="m10" class="auto-calc" readonly></div>
+            <div class="input-row"><label>11. 職工訓練費</label><input type="text" id="m11" value="60,000" onchange="calc()" onblur="fmtIn(this)"></div>
+            <div class="input-row"><label>12. 各項攤銷 (114年加速提列完畢)</label><input type="text" id="m12" value="0" onchange="calc()" onblur="fmtIn(this)"></div>
+            <div class="input-row"><label>13. 雜項購置費</label><input type="text" id="m13" value="420,000" onchange="calc()" onblur="fmtIn(this)"></div>
+            <div class="input-row"><label>14. 雜支/其它</label><input type="text" id="m14" value="1,306,600" onchange="calc()" onblur="fmtIn(this)"></div>
+            <div class="input-row"><label>15. 廣告費 (管理)</label><input type="text" id="m15" value="42,000" onchange="calc()" onblur="fmtIn(this)"></div>
+
+            <h4>5. 銷售費用 (逐筆 - 元)</h4>
+            <div class="input-row"><label>交際費 <span class="hint">(連動營收合計 0.3%)</span></label><input type="text" id="s_ent" class="auto-calc" readonly></div>
+            <div class="input-row"><label>廣告費/旅費 (銷售)</label><input type="text" id="s1" value="40,000" onchange="calc()" onblur="fmtIn(this)"></div>
+            <div class="input-row"><label>運費/郵電費</label><input type="text" id="s2" value="689,000" onchange="calc()" onblur="fmtIn(this)"></div>
+            
+            <div class="input-row">
+                <label>1. 企頻+新鮮視獎金(估) (%)</label>
+                <input type="number" id="b1_pct" class="pct-input" value="10" oninput="calc()"> %
+                <input type="text" id="b1_val" class="auto-calc" style="width:100px" readonly>
+            </div>
+            <div class="input-row">
+                <label>2. 業務獎金 (企頻5% / 新鮮視3%)</label>
+                <input type="number" id="b2a_pct" class="pct-input" value="5" oninput="calc()"> / 
+                <input type="number" id="b2b_pct" class="pct-input" value="3" oninput="calc()"> %
+                <input type="text" id="b2_val" class="auto-calc" style="width:100px" readonly>
+            </div>
+            <div class="input-row">
+                <label>3. 主管獎金 (%)</label>
+                <select id="b3_pct" style="margin:0 5px;" onchange="calc()">
+                    <option value="1">1%</option><option value="2">2%</option><option value="3" selected>3%</option>
+                </select>
+                <input type="text" id="b3_val" class="auto-calc" style="width:100px" readonly>
+            </div>
+
+            <h4>6. 營業外收支 (逐筆 - 元)</h4>
+            <div class="input-row"><label>利息收入</label><input type="text" id="oi1" value="990,000" onchange="calc()" onblur="fmtIn(this)"></div>
+            <div class="input-row"><label>其它收入 (補助等)</label><input type="text" id="oi2" value="1,980,000" onchange="calc()" onblur="fmtIn(this)"></div>
+            <div class="input-row"><label><b>佣金支出比例 % (企+新)</b></label><input type="number" id="p_comm_pct" value="5" oninput="calc()" style="width:100px; text-align:right;"></div>
+
+            <h4 class="new-biz-title">7. 新事業體預估 (元)</h4>
+            <div class="input-row"><label>新事業體營業收入</label><input type="text" id="nb_rev" value="0" onchange="calc()" onblur="fmtIn(this)"></div>
+            <div class="input-row"><label>新事業體建置費/補貼 (800家*$3000，其他費用待議)</label><input type="text" id="nb_setup" value="0" onchange="calc()" onblur="fmtIn(this)"></div>
+            <div class="input-row"><label>新團隊人事費 (副理7w+業務4.5w*3)*13m </label><input type="text" id="nb_pers" value="0" onchange="calc()" onblur="fmtIn(this)"></div>
+            <div class="input-row"><label>新事業體管銷</label><input type="text" id="nb_mgt" value="0" onchange="calc()" onblur="fmtIn(this)"></div>
+        </div>
+
+        <div class="report-area">
+            <h2 style="text-align:center;">115 年度預估損益表</h2>
+            <table class="report-table">
+                <tr class="total-row"><td>年度營業收入合計</td><td class="num" id="o_rev">0</td></tr>
+                <tr><td>年度營業成本合計</td><td class="num" id="o_cost">0</td></tr>
+                <tr class="total-row"><td>營業毛利 (GP)</td><td class="num" id="o_gp">0</td></tr>
+                <tr><td>年度銷售費用 (含連動獎金)</td><td class="num" id="o_sale">0</td></tr>
+                <tr><td>年度人事費用 (含保費連動)</td><td class="num" id="o_pers">0</td></tr>
+                <tr><td>年度管理費用 (含旅遊基金)</td><td class="num" id="o_mgt">0</td></tr>
+                <tr class="total-row"><td>年度營業利益 (OP)</td><td class="num" id="o_op">0</td></tr>
+                <tr style="color:red;"><td>年度佣金支出 (外項提撥)</td><td class="num" id="o_comm">0</td></tr>
+                <tr class="total-row"><td>年度稅前淨利 (PBT)</td><td class="num" id="o_pretax">0</td></tr>
+                <tr class="tax-row"><td>預估所得稅 (20%)</td><td class="num" id="o_tax_amt">0</td></tr>
+                <tr class="total-row" style="background:#e2e8f0;"><td>年度稅後淨利</td><td class="num" id="o_net">0</td></tr>
+                <tr class="tax-row">
+                    <td>年度公司配息金額 
+                        <select id="dist_pct" onchange="calc()">
+                            <option value="0.00">0%</option><option value="0.03">3%</option><option value="0.04">4%</option><option value="0.05" selected>5%</option>
+                            <option value="0.06">6%</option><option value="0.07">7%</option><option value="0.10">10%</option>
+                        </select>
+                    </td>
+                    <td class="num" id="o_dist_amt">0</td>
+                </tr>
+                <tr class="final-row"><td>公司年度最終保留盈餘</td><td class="num" id="o_remain">0</td></tr>
+                
+                <tr>
+                    <td colspan="2">
+                        <div class="stress-test-box">
+                            <div class="stress-title">
+                                <input type="checkbox" id="stress_active" onchange="toggleStress()"> 
+                                <label for="stress_active">⚠️ 啟動壓力測試區 (數值將與左側同步)</label>
+                            </div>
+                            <div style="display: flex; gap: 20px; justify-content: space-around;">
+                                <div>
+                                    企頻收入: <input type="text" id="st_r1" class="stress-input" oninput="syncToSide()" onblur="fmtIn(this)"> 萬
+                                </div>
+                                <div>
+                                    企頻成本: <input type="text" id="st_c1" class="stress-input" oninput="syncToSide()" onblur="fmtIn(this)"> 萬
+                                </div>
+                            </div>
+
+                            <div class="stress-title" style="margin-top:15px; border-top: 1px dashed #fdba74; padding-top:10px;">
+                                <input type="checkbox" id="bep_active" onchange="toggleBEP()"> 
+                                <label for="bep_active">⚖️ 損益平衡點 (自填營收連動，取消則還原)</label>
+                            </div>
+                            <div class="bep-grid">
+                                <div class="bep-item">企頻: <input type="text" id="bep_r1" class="stress-input" oninput="syncBEPToSide()" onblur="fmtIn(this)"> 萬</div>
+                                <div class="bep-item">新鮮視: <input type="text" id="bep_r2" class="stress-input" oninput="syncBEPToSide()" onblur="fmtIn(this)"> 萬</div>
+                                <div class="bep-item">廣播: <input type="text" id="bep_r3" class="stress-input" oninput="syncBEPToSide()" onblur="fmtIn(this)"> 萬</div>
+                                <div class="bep-item">代理: <input type="text" id="bep_r4" class="stress-input" oninput="syncBEPToSide()" onblur="fmtIn(this)"> 萬</div>
+                                <div class="bep-item">製作: <input type="text" id="bep_r5" class="stress-input" oninput="syncBEPToSide()" onblur="fmtIn(this)"> 萬</div>
+                                <div class="bep-item">其餘: <input type="text" id="bep_r6" class="stress-input" oninput="syncBEPToSide()" onblur="fmtIn(this)"> 萬</div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+
+                <tr class="new-biz-row"><td><b>[新事業體] 營業收入</b></td><td class="num new-biz-val" id="rn_rev">0</td></tr>
+                <tr><td>[新事業體] 總成本費用</td><td class="num" id="rn_cost_all">0</td></tr>
+                <tr class="total-row"><td><b>[新事業體] 稅前損益</b></td><td class="num new-biz-val" id="rn_pretax">0</td></tr>
+                <tr class="tax-row"><td>[新事業體] 預估所得稅 (20%)</td><td class="num" id="rn_tax">0</td></tr>
+                <tr class="final-row" style="background:#059669;"><td><b>[新事業體] 稅後損益</b></td><td class="num" id="rn_net" style="color:#fde047;">0</td></tr>
+                
+                <tr class="grand-total-row">
+                    <td><b>115 年度全公司總保留盈餘 (合計)</b></td>
+                    <td class="num" id="total_final_remain">0</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    let originalData = {}; // 用於暫存還原數據
+
+    function parseV(id) { return parseFloat(document.getElementById(id).value.replace(/,/g, '')) || 0; }
+    function fmt(n) { return Math.round(n).toLocaleString('en-US'); }
+    function fmtIn(el) { el.value = parseV(el.id).toLocaleString('en-US'); }
+
+    // --- 壓力測試區連動邏輯 ---
+    function toggleStress() {
+        const active = document.getElementById('stress_active').checked;
+        document.getElementById('st_r1').readOnly = !active;
+        document.getElementById('st_c1').readOnly = !active;
+        if(active) syncToSide(); 
+        calc();
+    }
+
+    function syncToSide() {
+        if(!document.getElementById('stress_active').checked) return;
+        document.getElementById('in_r1').value = document.getElementById('st_r1').value;
+        document.getElementById('c1').value = document.getElementById('st_c1').value;
+        calc();
+    }
+
+    function syncToStress() {
+        document.getElementById('st_r1').value = document.getElementById('in_r1').value;
+        document.getElementById('st_c1').value = document.getElementById('c1').value;
+    }
+
+    // --- 損益平衡點連動邏輯 ---
+    function toggleBEP() {
+        const active = document.getElementById('bep_active').checked;
+        const ids = ['in_r1', 'in_r2', 'in_r3', 'in_r4', 'in_r5', 'in_r6'];
+        
+        if (active) {
+            // 勾選時：紀錄原始數值並啟動連動
+            ids.forEach(id => originalData[id] = document.getElementById(id).value);
+            syncBEPToSide();
+        } else {
+            // 取消勾選時：還原原始數值
+            ids.forEach(id => {
+                if (originalData[id] !== undefined) {
+                    document.getElementById(id).value = originalData[id];
+                }
+            });
+            calc();
+        }
+    }
+
+    function syncBEPToSide() {
+        if(!document.getElementById('bep_active').checked) return;
+        for(let i=1; i<=6; i++) {
+            const val = document.getElementById('bep_r'+i).value;
+            if(val !== "") {
+                document.getElementById('in_r'+i).value = val;
+            }
+        }
+        calc();
+    }
+
+    // 初始化 BEP 顯示數值
+    function initBEPFields() {
+        for(let i=1; i<=6; i++) {
+            document.getElementById('bep_r'+i).value = document.getElementById('in_r'+i).value;
+        }
+    }
+
+    function exportPDF() {
+        const element = document.getElementById('print-area');
+        const opt = {
+            margin:       10,
+            filename:     '115年度預估損益報表.pdf',
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2 },
+            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'landscape' }
+        };
+        html2pdf().set(opt).from(element).save();
+    }
+
+    function calc() {
+        const r1 = parseV('in_r1') * 10000;
+        const r2 = parseV('in_r2') * 10000;
+        const r3 = parseV('in_r3') * 10000;
+        const revT = (parseV('in_r1')+parseV('in_r2')+parseV('in_r3')+parseV('in_r4')+parseV('in_r5')+parseV('in_r6')) * 10000;
+        
+        const costRadio = r3 * 0.65;
+        const costProd = revT * 0.035;
+        document.getElementById('c3_radio').value = fmt(costRadio / 10000);
+        document.getElementById('c3_prod').value = fmt(costProd / 10000);
+        
+        const costT = (parseV('c1') + parseV('c2') + (costRadio/10000) + (costProd/10000) + parseV('c4_agent') + parseV('c5_other')) * 10000;
+
+        const sBase = parseV('p1') + parseV('p2') + parseV('p3') + parseV('p11') + parseV('p4');
+        const lIns = sBase * 0.07;
+        const hIns = sBase * 0.065;
+        const sIns = sBase * 0.0211;
+        const pens = sBase * 0.06;
+        const yEnd = sBase * 0.20;
+
+        document.getElementById('p5').value = fmt(lIns);
+        document.getElementById('p6').value = fmt(hIns);
+        document.getElementById('p7').value = fmt(sIns);
+        document.getElementById('p9').value = fmt(yEnd);
+        document.getElementById('p10').value = fmt(pens);
+
+        const pT = sBase + lIns + hIns + sIns + parseV('p8') + yEnd + pens;
+
+        const tFund = r1 * 0.02;
+        document.getElementById('m10').value = fmt(tFund);
+        let mT = tFund;
+        ['m1','m2','m3','m4','m5','m6','m7','m8','m9','m11','m12','m13','m14','m15'].forEach(id => mT += parseV(id));
+
+        const entE = revT * 0.003; 
+        document.getElementById('s_ent').value = fmt(entE);
+        
+        const b1 = (r1 + r2) * (parseV('b1_pct') / 100);
+        const b2 = (r1 * (parseV('b2a_pct') / 100)) + (r2 * (parseV('b2b_pct') / 100));
+        const b3 = (r1 + r2) * (parseFloat(document.getElementById('b3_pct').value) / 100);
+        
+        document.getElementById('b1_val').value = fmt(b1);
+        document.getElementById('b2_val').value = fmt(b2);
+        document.getElementById('b3_val').value = fmt(b3);
+
+        const sT = entE + parseV('s1') + parseV('s2') + b1 + b2 + b3;
+        const commO = (r1 + r2) * (document.getElementById('p_comm_pct').value / 100);
+
+        const op = revT - costT - sT - pT - mT;
+        const pretax = op + (parseV('oi1') + parseV('oi2')) - commO;
+        const taxAmt = pretax > 0 ? pretax * 0.2 : 0;
+        const net = pretax - taxAmt;
+        const dPct = parseFloat(document.getElementById('dist_pct').value);
+        const distAmt = net > 0 ? net * dPct : 0;
+        const remain = net - distAmt;
+
+        document.getElementById('o_rev').innerText = fmt(revT);
+        document.getElementById('o_cost').innerText = fmt(costT);
+        document.getElementById('o_gp').innerText = fmt(revT - costT);
+        document.getElementById('o_sale').innerText = fmt(sT);
+        document.getElementById('o_pers').innerText = fmt(pT);
+        document.getElementById('o_mgt').innerText = fmt(mT);
+        document.getElementById('o_op').innerText = fmt(op);
+        document.getElementById('o_comm').innerText = fmt(commO);
+        document.getElementById('o_pretax').innerText = fmt(pretax);
+        document.getElementById('o_tax_amt').innerText = fmt(taxAmt);
+        document.getElementById('o_net').innerText = fmt(net);
+        document.getElementById('o_dist_amt').innerText = fmt(distAmt);
+        document.getElementById('o_remain').innerText = fmt(remain);
+
+        const nbRev = parseV('nb_rev');
+        const nbCostTotal = parseV('nb_setup') + parseV('nb_pers') + parseV('nb_mgt');
+        const nbPretax = nbRev - nbCostTotal;
+        const nbTax = nbPretax > 0 ? nbPretax * 0.2 : 0;
+        const nbNet = nbPretax - nbTax;
+
+        document.getElementById('rn_rev').innerText = fmt(nbRev);
+        document.getElementById('rn_cost_all').innerText = fmt(nbCostTotal);
+        document.getElementById('rn_pretax').innerText = fmt(nbPretax);
+        document.getElementById('rn_tax').innerText = fmt(nbTax);
+        document.getElementById('rn_net').innerText = fmt(nbNet);
+
+        document.getElementById('total_final_remain').innerText = fmt(remain + nbNet);
+    }
+    
+    window.onload = function() {
+        syncToStress(); 
+        initBEPFields();
+        toggleStress(); 
+        calc();
+    };
+</script>
+</body>
+</html>
